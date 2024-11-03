@@ -29,10 +29,10 @@ async function run() {
         process.on('SIGINT', () => {});
         
         const finished = core.getBooleanInput('finished', { required: true });
-        const fromCache = core.getBooleanInput('from_cache', { required: true });
+        const fromArtifact = core.getBooleanInput('from_artifact', { required: true }); // Changed from from_cache to from_artifact
         const x86 = core.getBooleanInput('x86', { required: false });
         
-        console.log(`finished: ${finished}, from cache: ${fromCache}`);
+        console.log(`finished: ${finished}, from artifact: ${fromArtifact}`);
         
         if (finished) {
             core.setOutput('finished', true);
@@ -42,7 +42,7 @@ async function run() {
         const cacheKey = x86 ? 'build-cache-x86' : 'build-cache';
         const cachePath = `${BUILD_PATH}\\build`;
 
-        if (fromCache) {
+        if (fromArtifact) { // Changed from fromCache to fromArtifact
             const restoredCacheKey = await cache.restoreCache([cachePath], cacheKey);
             if (restoredCacheKey) {
                 console.log(`Cache restored from key: ${restoredCacheKey}`);
