@@ -1,8 +1,7 @@
 name: CI
 on:  
-  push:
-    tags:
-      - '*'
+  workflow_dispatch:
+
 jobs:
   build-1:
     runs-on: windows-2022
