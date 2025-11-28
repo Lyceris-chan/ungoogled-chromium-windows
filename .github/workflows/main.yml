@@ -1,10 +1,32 @@
-name: CI
-on:  
-  push:
-    tags:
-      - '*'
+﻿name: CI
+on:
+  workflow_dispatch:
+    inputs:
+      build_x64:
+        description: 'Build x64 Architecture'
+        type: boolean
+        default: true
+      build_x86:
+        description: 'Build x86 Architecture'
+        type: boolean
+        default: false
+      build_arm:
+        description: 'Build ARM Architecture'
+        type: boolean
+        default: false
+      resume_run_id:
+        description: 'Resume from Run ID (Optional)'
+        required: false
+        type: string
+      resume_artifact_name:
+        description: 'Artifact Name to Resume (Required if Run ID set)'
+        required: false
+        type: string
+
 jobs:
   build-1:
+
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -15,21 +37,49 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+      - name: Download Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.resume_run_id }}
+          name: ${{ inputs.resume_artifact_name }}
+          path: C:\ungoogled-chromium-windows\build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        run: |
+          7z x C:\ungoogled-chromium-windows\build\artifacts.zip -oC:\ungoogled-chromium-windows\build -y
+          Remove-Item C:\ungoogled-chromium-windows\build\artifacts.zip -Force
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 1
           finished: false
           from_artifact: false
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-2:
+      finished: ${{ steps.stage.outputs.finished }}  build-2:
     needs: build-1
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -40,21 +90,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 2
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-3:
+      finished: ${{ steps.stage.outputs.finished }}  build-3:
     needs: build-2
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -65,21 +131,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 3
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-4:
+      finished: ${{ steps.stage.outputs.finished }}  build-4:
     needs: build-3
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -90,21 +172,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 4
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-5:
+      finished: ${{ steps.stage.outputs.finished }}  build-5:
     needs: build-4
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -115,21 +213,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 5
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-6:
+      finished: ${{ steps.stage.outputs.finished }}  build-6:
     needs: build-5
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -140,21 +254,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 6
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-7:
+      finished: ${{ steps.stage.outputs.finished }}  build-7:
     needs: build-6
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -165,21 +295,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 7
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-8:
+      finished: ${{ steps.stage.outputs.finished }}  build-8:
     needs: build-7
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -190,21 +336,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 8
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-9:
+      finished: ${{ steps.stage.outputs.finished }}  build-9:
     needs: build-8
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -215,21 +377,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 9
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-10:
+      finished: ${{ steps.stage.outputs.finished }}  build-10:
     needs: build-9
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -240,21 +418,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 10
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-11:
+      finished: ${{ steps.stage.outputs.finished }}  build-11:
     needs: build-10
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -265,21 +459,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 11
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-12:
+      finished: ${{ steps.stage.outputs.finished }}  build-12:
     needs: build-11
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -290,21 +500,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 12
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-13:
+      finished: ${{ steps.stage.outputs.finished }}  build-13:
     needs: build-12
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -315,21 +541,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 13
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-14:
+      finished: ${{ steps.stage.outputs.finished }}  build-14:
     needs: build-13
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -340,21 +582,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 14
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-15:
+      finished: ${{ steps.stage.outputs.finished }}  build-15:
     needs: build-14
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -365,21 +623,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 15
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
+
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-16:
+      finished: ${{ steps.stage.outputs.finished }}  build-16:
     needs: build-15
+  if: ${{ inputs.build_x64 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -390,21 +664,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x64-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x64-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 16
           finished: ${{ join(needs.*.outputs.finished) }}
           from_artifact: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
 
-  build-x86-1:
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-1:
+
+  if: ${{ inputs.build_x86 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -415,22 +705,49 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+      - name: Download Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.resume_run_id }}
+          name: ${{ inputs.resume_artifact_name }}
+          path: C:\ungoogled-chromium-windows\build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        run: |
+          7z x C:\ungoogled-chromium-windows\build\artifacts.zip -oC:\ungoogled-chromium-windows\build -y
+          Remove-Item C:\ungoogled-chromium-windows\build\artifacts.zip -Force
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 1
           finished: false
           from_artifact: false
           x86: true
+
     outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-2:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-2:
     needs: build-x86-1
+  if: ${{ inputs.build_x86 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -441,386 +758,37 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-3:
-    needs: build-x86-2
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-4:
-    needs: build-x86-3
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-5:
-    needs: build-x86-4
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-6:
-    needs: build-x86-5
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-7:
-    needs: build-x86-6
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-8:
-    needs: build-x86-7
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-9:
-    needs: build-x86-8
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-10:
-    needs: build-x86-9
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-11:
-    needs: build-x86-10
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-12:
-    needs: build-x86-11
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-13:
-    needs: build-x86-12
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-14:
-    needs: build-x86-13
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-15:
-    needs: build-x86-14
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-x86-16:
-    needs: build-x86-15
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          x86: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
+        
 
-  build-arm-1:
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 2
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-3:
+    needs: build-x86-2
+  if: ${{ inputs.build_x86 == true }}
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -831,424 +799,1252 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
       - name: Init
         run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/stage
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
         with:
+          stage_index: 3
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-4:
+    needs: build-x86-3
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 4
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-5:
+    needs: build-x86-4
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 5
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-6:
+    needs: build-x86-5
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 6
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-7:
+    needs: build-x86-6
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 7
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-8:
+    needs: build-x86-7
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 8
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-9:
+    needs: build-x86-8
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 9
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-10:
+    needs: build-x86-9
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 10
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-11:
+    needs: build-x86-10
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 11
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-12:
+    needs: build-x86-11
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 12
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-13:
+    needs: build-x86-12
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 13
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-14:
+    needs: build-x86-13
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 14
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-15:
+    needs: build-x86-14
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 15
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-x86-16:
+    needs: build-x86-15
+  if: ${{ inputs.build_x86 == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-x86-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-x86-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 16
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+          x86: true
+
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-1:
+
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+      - name: Download Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ inputs.resume_run_id }}
+          name: ${{ inputs.resume_artifact_name }}
+          path: C:\ungoogled-chromium-windows\build
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract Resume Artifact
+        if: ${{ inputs.resume_run_id != '' }}
+        run: |
+          7z x C:\ungoogled-chromium-windows\build\artifacts.zip -oC:\ungoogled-chromium-windows\build -y
+          Remove-Item C:\ungoogled-chromium-windows\build\artifacts.zip -Force
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 1
           finished: false
           from_artifact: false
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-2:
-    needs: build-arm-1
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-3:
-    needs: build-arm-2
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-4:
-    needs: build-arm-3
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-5:
-    needs: build-arm-4
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-6:
-    needs: build-arm-5
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-7:
-    needs: build-arm-6
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-8:
-    needs: build-arm-7
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-9:
-    needs: build-arm-8
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-10:
-    needs: build-arm-9
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-11:
-    needs: build-arm-10
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-12:
-    needs: build-arm-11
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-13:
-    needs: build-arm-12
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-14:
-    needs: build-arm-13
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-15:
-    needs: build-arm-14
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-  build-arm-16:
-    needs: build-arm-15
-    runs-on: windows-2022
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          submodules: 'recursive'
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: ${{ join(needs.*.outputs.finished) }}
-          from_artifact: true
-          arm: true
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
 
-  publish-release:
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-2:
+    needs: build-arm-1
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 2
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-3:
+    needs: build-arm-2
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 3
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-4:
+    needs: build-arm-3
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 4
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-5:
+    needs: build-arm-4
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 5
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-6:
+    needs: build-arm-5
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 6
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-7:
+    needs: build-arm-6
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 7
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-8:
+    needs: build-arm-7
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 8
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-9:
+    needs: build-arm-8
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 9
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-10:
+    needs: build-arm-9
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 10
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-11:
+    needs: build-arm-10
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 11
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-12:
+    needs: build-arm-11
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 12
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-13:
+    needs: build-arm-12
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 13
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-14:
+    needs: build-arm-13
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 14
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-15:
+    needs: build-arm-14
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 15
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  build-arm-16:
+    needs: build-arm-15
+  if: ${{ inputs.build_arm == true }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: 'recursive'
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Sccache Setup
+        uses: mozilla-actions/sccache-action@v0.0.4
+        with:
+          key: sccache-arm-${{ github.run_id }}-${{ github.job }}
+          restore-keys: sccache-arm-
+          
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+        
+
+
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        env:
+          SCCACHE_GHA_ENABLED: "true"
+          SCCACHE_IDLE_TIMEOUT: "0"
+        with:
+          stage_index: 16
+          finished: ${{ join(needs.*.outputs.finished) }}
+          from_artifact: true
+
+          arm: true
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}  publish-release:
+    if: ${{ always() && (inputs.build_x64 == true || inputs.build_x86 == true || inputs.build_arm == true) }}
     needs: [build-16, build-x86-16, build-arm-16]
     runs-on: ubuntu-latest
     steps:
       - name: Download package
+        if: ${{ inputs.build_x64 == true }}
         uses: actions/download-artifact@v4
         with:
           name: chromium
       - name: Download x86 package
+        if: ${{ inputs.build_x86 == true }}
         uses: actions/download-artifact@v4
         with:
           name: chromium-x86
       - name: Download arm package
+        if: ${{ inputs.build_arm == true }}
         uses: actions/download-artifact@v4
         with:
           name: chromium-arm
@@ -1256,12 +2052,13 @@ jobs:
         id: publish
         uses: softprops/action-gh-release@v1
         with:
-          fail_on_unmatched_files: true
+          fail_on_unmatched_files: false
           files: |
             ungoogled-chromium*
     outputs:
       assets: ${{ steps.publish.outputs.assets }}
   publish-winget:
+    if: ${{ always() && needs.publish-release.result == 'success' }}
     needs: publish-release
     runs-on: windows-2022
     steps:

@@ -1,4 +1,4 @@
-name: 'winget'
+﻿name: 'winget'
 description: 'Release to winget repository'
 inputs:
   token:
@@ -11,5 +11,5 @@ inputs:
     description: Artifact assets
     required: true
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'index.js'
