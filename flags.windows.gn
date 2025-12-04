@@ -1,3 +1,4 @@
+# Base build configuration
 chrome_pgo_phase=2
 enable_swiftshader=false
 ffmpeg_branding="Chrome"
@@ -15,3 +16,27 @@ symbol_level=0
 enable_rust=true
 enable_mse_mpeg2ts_stream_parser=true
 cc_wrapper="sccache"
+
+# Thorium/Chromium_Clang optimizations
+use_thin_lto=true
+thin_lto_enable_optimizations=true
+enable_stripping=true
+exclude_unwind_tables=true
+enable_iterator_debugging=false
+disable_fieldtrial_testing_config=true
+win_enable_cfg_guards=true
+use_lld=true
+treat_warnings_as_errors=false
+
+# V8 optimizations
+v8_enable_fast_torque=true
+v8_enable_builtins_optimization=true
+v8_enable_maglev=true
+v8_enable_turbofan=true
+v8_enable_wasm_simd256_revec=true
+use_v8_context_snapshot=true
+
+# Other optimizations
+optimize_webui=true
+enable_precompiled_headers=false
+enable_nacl=false

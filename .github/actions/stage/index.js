@@ -53,9 +53,14 @@ async function run() {
     const from_artifact = core.getBooleanInput('from_artifact', {required: true});
     const x86 = core.getBooleanInput('x86', {required: false});
     const arm = core.getBooleanInput('arm', {required: false});
+    const simd = core.getInput('simd', {required: false}) || 'sse3';
     const inputArtifactId = core.getInput('artifact_id', {required: false});
     
-    console.log(`finished: ${finished}, artifact: ${from_artifact}, inputArtifactId: ${inputArtifactId}`);
+    console.log(`finished: ${finished}, artifact: ${from_artifact}, simd: ${simd}, inputArtifactId: ${inputArtifactId}`);
+    console.log(`=== Build Configuration ===`);
+    console.log(`  Architecture: ${x86 ? 'x86' : (arm ? 'arm64' : 'x64')}`);
+    console.log(`  SIMD Level: ${simd}`);
+    console.log(`===========================`);
     
     if (finished) {
         core.setOutput('finished', true);
@@ -63,7 +68,10 @@ async function run() {
     }
 
     const artifact = new DefaultArtifactClient();
-    const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact-x64');
+    // Include SIMD level in artifact name for x64 builds
+    const archSuffix = x86 ? 'x86' : (arm ? 'arm' : `x64-${simd}`);
+    const artifactName = `build-artifact-${archSuffix}`;
+    console.log(`Using artifact name: ${artifactName}`);
 
     if (from_artifact) {
         try {
@@ -101,7 +109,7 @@ async function run() {
         }
     }
 
-    const args = ['build.py', '--ci', '-j', '2'];
+    const args = ['build.py', '--ci', '-j', '2', '--simd', simd];
     if (x86)
         args.push('--x86');
     if (arm)
@@ -133,7 +141,8 @@ async function run() {
         const globber = await glob.create('C:\\ungoogled-chromium-windows\\build\\ungoogled-chromium*',
             {matchDirectories: false});
         let packageList = await globber.glob();
-        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : 'chromium-x64');
+        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : `chromium-x64-${simd}`);
+        console.log(`Uploading final artifact: ${finalArtifactName}`);
         for (let i = 0; i < 5; ++i) {
             try {
                 await artifact.deleteArtifact(finalArtifactName);
@@ -168,8 +177,10 @@ run().catch(async err => {
     try {
         const x86 = core.getBooleanInput('x86', {required: false});
         const arm = core.getBooleanInput('arm', {required: false});
+        const simd = core.getInput('simd', {required: false}) || 'sse3';
         const artifact = new DefaultArtifactClient();
-        const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact-x64');
+        const archSuffix = x86 ? 'x86' : (arm ? 'arm' : `x64-${simd}`);
+        const artifactName = `build-artifact-${archSuffix}`;
         
         const artifactId = await uploadBuildArtifact(artifact, artifactName);
         setArtifactOutput(artifactId);
