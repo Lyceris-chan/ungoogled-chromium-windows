@@ -39,4 +39,3 @@ use_v8_context_snapshot=true
 # Other optimizations
 optimize_webui=true
 enable_precompiled_headers=false
-enable_nacl=false
