@@ -1,0 +1,21 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -637,13 +637,13 @@ config("compiler") {
+     # (https://crbug.com/829795).
+     cflags += [ "-fmerge-all-constants" ]
+ 
+-    if (!use_sized_deallocation) {
++    # Enable sized deallocation for better performance (Chromium_Clang/Thorium)
++    # if (!use_sized_deallocation) {
+       if (is_win) {
+-        cflags += [ "/Zc:sizedDealloc-" ]
++        cflags += [ "/Zc:sizedDealloc" ]
+       } else {
+-        cflags += [ "-fno-sized-deallocation" ]
++        cflags += [ "-fsized-deallocation" ]
+       }
+-    }
++    # }
+ 
+     if (diagnostics_print_source_range_info && !is_win) {
+       cflags += [ "-fdiagnostics-print-source-range-info" ]

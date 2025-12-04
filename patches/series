@@ -21,3 +21,6 @@ ungoogled-chromium/windows/windows-fix-licenses-gn-path.patch
 ungoogled-chromium/windows/windows-fix-building-with-rust.patch
 ungoogled-chromium/windows/windows-fix-remove-unused-preferences-fields.patch
 ungoogled-chromium/windows/windows-fix-missing-includes.patch
+ungoogled-chromium/windows/windows-enable-sized-deallocation.patch
+ungoogled-chromium/windows/windows-mini-installer-memcpy.patch
+ungoogled-chromium/windows/windows-v8-warn-about-builtin-profile-data.patch
