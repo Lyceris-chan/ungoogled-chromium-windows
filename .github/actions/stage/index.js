@@ -18,26 +18,36 @@ async function findArtifactFromPreviousRuns(artifactName) {
         return null;
     }
     
+    const repoFullName = process.env.GITHUB_REPOSITORY;
+    if (!repoFullName || !repoFullName.includes('/')) {
+        console.log('Invalid or missing GITHUB_REPOSITORY environment variable');
+        return null;
+    }
+    
     const octokit = github.getOctokit(token);
-    const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+    const [owner, repo] = repoFullName.split('/');
     
     try {
-        // List artifacts for the repository
+        // List artifacts for the repository (sorted by created_at desc by default)
         const { data } = await octokit.rest.actions.listArtifactsForRepo({
             owner,
             repo,
             name: artifactName,
-            per_page: 10
+            per_page: 100
         });
         
         if (data.artifacts && data.artifacts.length > 0) {
-            // Get the most recent non-expired artifact
-            const validArtifact = data.artifacts.find(a => !a.expired);
-            if (validArtifact) {
-                console.log(`Found artifact '${artifactName}' from run ${validArtifact.workflow_run.id} with ID: ${validArtifact.id}`);
+            // Filter non-expired artifacts and sort by created_at (newest first)
+            const validArtifacts = data.artifacts
+                .filter(a => !a.expired)
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            if (validArtifacts.length > 0) {
+                const mostRecent = validArtifacts[0];
+                console.log(`Found artifact '${artifactName}' from run ${mostRecent.workflow_run.id} with ID: ${mostRecent.id} (created: ${mostRecent.created_at})`);
                 return {
-                    id: validArtifact.id,
-                    runId: validArtifact.workflow_run.id
+                    id: mostRecent.id,
+                    runId: mostRecent.workflow_run.id
                 };
             }
         }
