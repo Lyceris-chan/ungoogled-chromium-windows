@@ -289,37 +289,37 @@ jobs:
       contents: write
     steps:
       - name: Download x64-sse3 package
-        if: ${{ needs.build-x64-sse3.result == 'success' }}
+        if: ${{ needs.build-x64-sse3.result == 'success' && needs.build-x64-sse3.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: chromium-x64-sse3
       - name: Download x64-avx package
-        if: ${{ needs.build-x64-avx.result == 'success' }}
+        if: ${{ needs.build-x64-avx.result == 'success' && needs.build-x64-avx.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: chromium-x64-avx
       - name: Download x64-avx2 package
-        if: ${{ needs.build-x64-avx2.result == 'success' }}
+        if: ${{ needs.build-x64-avx2.result == 'success' && needs.build-x64-avx2.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: chromium-x64-avx2
       - name: Download x64-avx512 package
-        if: ${{ needs.build-x64-avx512.result == 'success' }}
+        if: ${{ needs.build-x64-avx512.result == 'success' && needs.build-x64-avx512.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: chromium-x64-avx512
       - name: Download x86 package
-        if: ${{ needs.build-x86.result == 'success' }}
+        if: ${{ needs.build-x86.result == 'success' && needs.build-x86.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
           name: chromium-x86
       - name: Download arm package
-        if: ${{ needs.build-arm.result == 'success' }}
+        if: ${{ needs.build-arm.result == 'success' && needs.build-arm.outputs.finished == 'true' }}
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
