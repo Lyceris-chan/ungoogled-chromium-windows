@@ -1,11 +1,32 @@
 name: CI
-on:  
+on:
   push:
     tags:
       - '*'
+  workflow_dispatch:
+    inputs:
+      arch:
+        description: 'Architecture to build'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - x64
+          - x86
+          - arm
+      artifact_id:
+        description: 'Artifact ID to resume from (leave empty for fresh build)'
+        required: false
+        default: ''
+        type: string
 jobs:
   build-x64:
+    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64' }}
     runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,11 +53,17 @@ jobs:
         with:
           finished: false
           from_artifact: true
+          artifact_id: ${{ github.event.inputs.artifact_id }}
     outputs:
       finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
 
   build-x86:
+    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x86' }}
     runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,11 +91,17 @@ jobs:
           finished: false
           from_artifact: true
           x86: true
+          artifact_id: ${{ github.event.inputs.artifact_id }}
     outputs:
       finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
 
   build-arm:
+    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'arm' }}
     runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -96,12 +129,14 @@ jobs:
           finished: false
           from_artifact: true
           arm: true
+          artifact_id: ${{ github.event.inputs.artifact_id }}
     outputs:
       finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
 
   publish-release:
     needs: [build-x64, build-x86, build-arm]
-    if: ${{ always() }}
+    if: ${{ always() && github.event_name == 'push' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -133,6 +168,7 @@ jobs:
 
   publish-winget:
     needs: publish-release
+    if: ${{ github.event_name == 'push' }}
     runs-on: windows-2022
     steps:
       - name: Checkout
