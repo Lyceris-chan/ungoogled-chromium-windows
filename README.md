@@ -33,6 +33,19 @@ For x64 builds, you can choose from the following SIMD instruction set levels:
 - **LLVM Loop Optimizations**: Advanced loop transformations including loop interchange, unroll-and-jam, and loop flattening
 - **O3 Optimization**: Aggressive compiler optimizations enabled
 - **V8 Engine Optimizations**: Fast Torque, Maglev, TurboFan, and WASM SIMD256 revectorization
+- **Sized Deallocation**: Improved memory deallocation performance
+- **Fast FP Contract**: Fast floating-point contraction for AVX2/AVX512 builds
+- **ICF (Identical Code Folding)**: Reduced binary size through code deduplication
+- **Text Section Splitting**: Optimized code layout for better cache performance
+- **LLD Tail Merge**: Optimized string tail merging for smaller binaries
+
+### Media/Codec Enhancements
+
+- **HEVC/H.265 Support**: Hardware-accelerated HEVC decoding via FFmpeg
+- **Enhanced Audio Codecs**: AC3, E-AC3, DTS, Dolby Vision, MPEG-H audio support
+- **WebRTC H.265**: Enabled H.265 L1T2/L1T3 for WebRTC streams
+- **HLS Demuxer**: HTTP Live Streaming support
+- **Widevine CDM**: Content decryption module support
 
 ## Building
 

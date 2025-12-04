@@ -1,4 +1,5 @@
 ungoogled-chromium/windows/windows-enable-lto-optimizations.patch
 ungoogled-chromium/windows/windows-llvm-loop-optimizations.patch
 ungoogled-chromium/windows/windows-enable-o3-optimization.patch
+ungoogled-chromium/windows/windows-enable-fp-contract-fast.patch
 ungoogled-chromium/windows/windows-enable-avx512.patch
