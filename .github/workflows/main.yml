@@ -314,11 +314,34 @@ jobs:
           name: chromium-arm
       - name: Publish release
         id: publish
-        uses: softprops/action-gh-release@v1
-        with:
-          fail_on_unmatched_files: false
-          files: |
-            ungoogled-chromium*
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          
+          # Check if release exists, create if not
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Creating release $TAG..."
+            gh release create "$TAG" --title "$TAG" --notes "Ungoogled Chromium $TAG"
+          fi
+          
+          # Upload any ungoogled-chromium files that exist
+          shopt -s nullglob
+          files=(ungoogled-chromium*)
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "Uploading ${#files[@]} file(s)..."
+            for file in "${files[@]}"; do
+              echo "Uploading $file..."
+              gh release upload "$TAG" "$file" --clobber || true
+            done
+          else
+            echo "No ungoogled-chromium files found to upload"
+          fi
+          
+          # Get release assets as JSON for output
+          ASSETS=$(gh release view "$TAG" --json assets -q '.assets')
+          echo "assets=$ASSETS" >> $GITHUB_OUTPUT
     outputs:
       assets: ${{ steps.publish.outputs.assets }}
 
