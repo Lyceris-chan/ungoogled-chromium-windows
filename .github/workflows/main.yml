@@ -139,7 +139,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           cache: 'npm'
-          cache-dependency-path: ./.github/actions/winget/package-lock.json
+          cache-dependency-path: ./.github/actions/winget/package.json
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/winget
