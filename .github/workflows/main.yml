@@ -103,6 +103,8 @@ jobs:
     needs: [build-default, build-x86, build-arm]
     if: ${{ always() }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Download package
         if: ${{ needs.build-default.result == 'success' }}
