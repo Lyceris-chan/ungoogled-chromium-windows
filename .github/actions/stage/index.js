@@ -142,7 +142,7 @@ async function run() {
             }
             try {
                 const result = await artifact.uploadArtifact(finalArtifactName, packageList,
-                    'C:\\ungoogled-chromium-windows\\build', {retentionDays: 1, compressionLevel: 0});
+                    'C:\\ungoogled-chromium-windows\\build', {retentionDays: 3, compressionLevel: 0});
                 console.log(`Uploaded final artifact with ID: ${result.id}`);
                 break;
             } catch (e) {
