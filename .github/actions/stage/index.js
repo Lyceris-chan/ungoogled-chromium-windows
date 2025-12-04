@@ -2,11 +2,61 @@ const core = require('@actions/core');
 const io = require('@actions/io');
 const exec = require('@actions/exec');
 const {DefaultArtifactClient} = require('@actions/artifact');
+const github = require('@actions/github');
 const glob = require('@actions/glob');
 
 // Helper function to set artifact output
 function setArtifactOutput(artifactId) {
     core.setOutput('artifact_id', artifactId ? String(artifactId) : '');
+}
+
+async function findArtifactFromPreviousRuns(artifactName) {
+    // Use GitHub API to find artifact from previous workflow runs
+    const token = process.env.GITHUB_TOKEN;
+    if (!token) {
+        console.log('No GITHUB_TOKEN available, cannot search previous runs');
+        return null;
+    }
+    
+    const repoFullName = process.env.GITHUB_REPOSITORY;
+    if (!repoFullName || !repoFullName.includes('/')) {
+        console.log('Invalid or missing GITHUB_REPOSITORY environment variable');
+        return null;
+    }
+    
+    const octokit = github.getOctokit(token);
+    const [owner, repo] = repoFullName.split('/');
+    
+    try {
+        // List artifacts for the repository (sorted by created_at desc by default)
+        const { data } = await octokit.rest.actions.listArtifactsForRepo({
+            owner,
+            repo,
+            name: artifactName,
+            per_page: 100
+        });
+        
+        if (data.artifacts && data.artifacts.length > 0) {
+            // Filter non-expired artifacts and sort by created_at (newest first)
+            const validArtifacts = data.artifacts
+                .filter(a => !a.expired)
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+            
+            if (validArtifacts.length > 0) {
+                const mostRecent = validArtifacts[0];
+                console.log(`Found artifact '${artifactName}' from run ${mostRecent.workflow_run.id} with ID: ${mostRecent.id} (created: ${mostRecent.created_at})`);
+                return {
+                    id: mostRecent.id,
+                    runId: mostRecent.workflow_run.id
+                };
+            }
+        }
+        console.log(`No valid artifact found with name '${artifactName}' in previous runs`);
+        return null;
+    } catch (e) {
+        console.log(`Error searching for artifacts: ${e.message}`);
+        return null;
+    }
 }
 
 async function uploadBuildArtifact(artifact, artifactName) {
@@ -87,13 +137,21 @@ async function run() {
                     console.log(`Using provided artifact ID: ${downloadArtifactId}`);
                 }
             } else {
-                // Try to find the artifact by name
+                // Try to find the artifact by name in current run first
                 try {
                     const artifactInfo = await artifact.getArtifact(artifactName);
                     downloadArtifactId = artifactInfo.artifact.id;
-                    console.log(`Found artifact by name with ID: ${downloadArtifactId}`);
+                    console.log(`Found artifact in current run with ID: ${downloadArtifactId}`);
                 } catch (e) {
-                    console.log(`No existing artifact found by name '${artifactName}', starting fresh build`);
+                    console.log(`No artifact found in current run, searching previous runs...`);
+                    // Try to find artifact from previous workflow runs
+                    const previousArtifact = await findArtifactFromPreviousRuns(artifactName);
+                    if (previousArtifact) {
+                        downloadArtifactId = previousArtifact.id;
+                        console.log(`Will download artifact from previous run ${previousArtifact.runId}`);
+                    } else {
+                        console.log(`No existing artifact found by name '${artifactName}', starting fresh build`);
+                    }
                 }
             }
             

@@ -67,6 +67,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -106,6 +108,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -145,6 +149,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -184,6 +190,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -222,6 +230,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -260,6 +270,8 @@ jobs:
       - name: Run Stage
         id: stage
         uses: ./.github/actions/stage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
           finished: false
           from_artifact: true
@@ -279,40 +291,78 @@ jobs:
       - name: Download x64-sse3 package
         if: ${{ needs.build-x64-sse3.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-sse3
       - name: Download x64-avx package
         if: ${{ needs.build-x64-avx.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx
       - name: Download x64-avx2 package
         if: ${{ needs.build-x64-avx2.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx2
       - name: Download x64-avx512 package
         if: ${{ needs.build-x64-avx512.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx512
       - name: Download x86 package
         if: ${{ needs.build-x86.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x86
       - name: Download arm package
         if: ${{ needs.build-arm.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-arm
       - name: Publish release
         id: publish
-        uses: softprops/action-gh-release@v1
-        with:
-          fail_on_unmatched_files: false
-          files: |
-            ungoogled-chromium*
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          
+          # Check if release exists, create if not
+          if ! gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Creating release $TAG..."
+            gh release create "$TAG" --title "$TAG" --notes "Ungoogled Chromium $TAG"
+          fi
+          
+          # Upload any ungoogled-chromium files that exist
+          files=()
+          for f in ungoogled-chromium*; do
+            [ -e "$f" ] && files+=("$f")
+          done
+          
+          if [ ${#files[@]} -gt 0 ]; then
+            echo "Uploading ${#files[@]} file(s)..."
+            for file in "${files[@]}"; do
+              echo "Uploading $file..."
+              if ! gh release upload "$TAG" "$file" --clobber; then
+                echo "Warning: Failed to upload $file, continuing..."
+              fi
+            done
+          else
+            echo "No ungoogled-chromium files found to upload"
+          fi
+          
+          # Get release assets as JSON for output (with retry)
+          for i in 1 2 3; do
+            ASSETS=$(gh release view "$TAG" --json assets -q '.assets' 2>/dev/null) && break
+            echo "Attempt $i: Failed to get release assets, retrying..."
+            sleep 2
+          done
+          echo "assets=${ASSETS:-[]}" >> $GITHUB_OUTPUT
     outputs:
       assets: ${{ steps.publish.outputs.assets }}
 
