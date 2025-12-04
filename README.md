@@ -10,6 +10,31 @@ Or install using `winget install --id=eloston.ungoogled-chromium -e`.
 
 **Source Code**: It is recommended to use a tag via `git checkout` (see building instructions below). You may also use `master`, but it is for development and may not be stable.
 
+## Optimized Builds
+
+This repository includes optimizations from [Chromium_Clang](https://github.com/RobRich999/Chromium_Clang) and [Thorium](https://github.com/Alex313031/Thorium) projects.
+
+### SIMD Instruction Set Variants
+
+For x64 builds, you can choose from the following SIMD instruction set levels:
+
+| Variant | CPU Requirements | Description |
+|---------|-----------------|-------------|
+| `sse3` | Any x64 CPU (default) | Maximum compatibility build, works on all x64 processors |
+| `avx` | Sandy Bridge/Bulldozer or newer | Improved SIMD performance, requires AVX support |
+| `avx2` | Haswell/Excavator or newer | Enhanced SIMD with FMA, better for modern CPUs |
+| `avx512` | Skylake-X/Zen 4 or newer | Maximum SIMD performance, requires AVX-512 support |
+
+**Note**: Higher SIMD levels provide better performance but require newer processors. If unsure, use the `sse3` build for maximum compatibility.
+
+### Build Optimizations Included
+
+- **ThinLTO Optimizations**: Link-time optimization with level 3 for maximum performance
+- **LLVM Loop Optimizations**: Advanced loop transformations including loop interchange, unroll-and-jam, and loop flattening
+- **O3 Optimization**: Aggressive compiler optimizations enabled
+- **V8 Engine Optimizations**: Fast Torque, Maglev, TurboFan, and WASM SIMD256 revectorization
+- **Media Optimizations**: HEVC, H.264, H.265 WebRTC support, and enhanced codec support
+
 ## Building
 
 Google only supports [Windows 10 x64 or newer](https://chromium.googlesource.com/chromium/src/+/refs/heads/main/docs/windows_build_instructions.md#system-requirements). These instructions are tested on Windows 10 Pro x64.

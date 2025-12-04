@@ -15,6 +15,17 @@ on:
           - x64
           - x86
           - arm
+      simd:
+        description: 'SIMD instruction set for x64 builds (all builds all variants)'
+        required: true
+        default: 'avx'
+        type: choice
+        options:
+          - all
+          - sse3
+          - avx
+          - avx2
+          - avx512
       artifact_id:
         description: 'Artifact ID to resume from (leave empty for fresh build)'
         required: false
@@ -26,8 +37,9 @@ on:
         default: false
         type: boolean
 jobs:
-  build-x64:
-    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64' }}
+  # SSE3 build (default compatibility build)
+  build-x64-sse3:
+    if: ${{ (github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64') && (github.event.inputs.simd == 'all' || github.event.inputs.simd == 'sse3' || github.event.inputs.simd == '') }}
     runs-on: windows-2022
     permissions:
       contents: read
@@ -41,7 +53,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x64-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-sse3-${{ hashFiles('**') }}
           save: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -58,6 +70,124 @@ jobs:
         with:
           finished: false
           from_artifact: true
+          simd: sse3
+          artifact_id: ${{ github.event.inputs.artifact_id }}
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+
+  # AVX build (Sandy Bridge/Bulldozer or newer)
+  build-x64-avx:
+    if: ${{ (github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64') && (github.event.inputs.simd == 'all' || github.event.inputs.simd == 'avx') }}
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-x64-avx-${{ hashFiles('**') }}
+          save: true
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        with:
+          finished: false
+          from_artifact: true
+          simd: avx
+          artifact_id: ${{ github.event.inputs.artifact_id }}
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+
+  # AVX2 build (Haswell/Excavator or newer)
+  build-x64-avx2:
+    if: ${{ (github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64') && (github.event.inputs.simd == 'all' || github.event.inputs.simd == 'avx2') }}
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-x64-avx2-${{ hashFiles('**') }}
+          save: true
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        with:
+          finished: false
+          from_artifact: true
+          simd: avx2
+          artifact_id: ${{ github.event.inputs.artifact_id }}
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}
+      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+
+  # AVX512 build (Skylake-X/Zen 4 or newer)
+  build-x64-avx512:
+    if: ${{ (github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64') && (github.event.inputs.simd == 'all' || github.event.inputs.simd == 'avx512') }}
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-x64-avx512-${{ hashFiles('**') }}
+          save: true
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        with:
+          finished: false
+          from_artifact: true
+          simd: avx512
           artifact_id: ${{ github.event.inputs.artifact_id }}
     outputs:
       finished: ${{ steps.stage.outputs.finished }}
@@ -140,17 +270,32 @@ jobs:
       artifact_id: ${{ steps.stage.outputs.artifact_id }}
 
   publish-release:
-    needs: [build-x64, build-x86, build-arm]
+    needs: [build-x64-sse3, build-x64-avx, build-x64-avx2, build-x64-avx512, build-x86, build-arm]
     if: ${{ always() && (github.event_name == 'push' || inputs.create_release) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download x64 package
-        if: ${{ needs.build-x64.result == 'success' }}
+      - name: Download x64-sse3 package
+        if: ${{ needs.build-x64-sse3.result == 'success' }}
         uses: actions/download-artifact@v4
         with:
-          name: chromium-x64
+          name: chromium-x64-sse3
+      - name: Download x64-avx package
+        if: ${{ needs.build-x64-avx.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx
+      - name: Download x64-avx2 package
+        if: ${{ needs.build-x64-avx2.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx2
+      - name: Download x64-avx512 package
+        if: ${{ needs.build-x64-avx512.result == 'success' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx512
       - name: Download x86 package
         if: ${{ needs.build-x86.result == 'success' }}
         uses: actions/download-artifact@v4

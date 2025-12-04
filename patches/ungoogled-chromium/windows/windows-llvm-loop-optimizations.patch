@@ -1,0 +1,37 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -2667,6 +2667,15 @@ if (is_win) {
+   common_optimize_on_cflags = [
+     "/Oy-",  # Disable omitting frame pointers, must be after /O2.
+     "/Zc:inline",  # Remove unreferenced COMDAT (faster links).
++   "-mllvm", "-adce-remove-loops",
++   "-mllvm", "-enable-gvn-hoist",
++   "-mllvm", "-enable-local-reassign",
++   "-mllvm", "-enable-nontrivial-unswitch",
++   "-mllvm", "-enable-loopinterchange",
++   "-mllvm", "-enable-loop-distribute",
++   "-mllvm", "-enable-unroll-and-jam",
++   "-mllvm", "-enable-loop-flatten",
++   "-mllvm", "-enable-loop-versioning-licm",
+   ]
+   if (!is_asan) {
+     common_optimize_on_cflags += [
+@@ -2680,6 +2689,18 @@ if (is_win) {
+   }
+   common_optimize_on_ldflags = []
+ 
++  common_optimize_on_ldflags += [
++   "-mllvm:-adce-remove-loops",
++   "-mllvm:-enable-gvn-hoist",
++   "-mllvm:-enable-local-reassign",
++   "-mllvm:-enable-nontrivial-unswitch",
++   "-mllvm:-enable-loopinterchange",
++   "-mllvm:-enable-loop-distribute",
++   "-mllvm:-enable-unroll-and-jam",
++   "-mllvm:-enable-loop-flatten",
++   "-mllvm:-enable-loop-versioning-licm",
++  ]
++
+   # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
+   # misleading symbols in stack traces.
+   if (!is_debug && !is_component_build) {

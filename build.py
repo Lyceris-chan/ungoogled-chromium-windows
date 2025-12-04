@@ -144,6 +144,12 @@ def main():
         '--tarball',
         action='store_true'
     )
+    parser.add_argument(
+        '--simd',
+        choices=['sse3', 'avx', 'avx2', 'avx512'],
+        default='sse3',
+        help='SIMD instruction set to target (default: sse3 for compatibility)'
+    )
     args = parser.parse_args()
 
     # Set common variables
@@ -226,6 +232,17 @@ def main():
             source_tree,
             patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
         )
+        
+        # Apply SIMD-specific patches for x64 builds
+        if not args.arm and not args.x86:
+            simd_series_file = _ROOT_DIR / 'patches' / f'series.{args.simd}'
+            if simd_series_file.exists():
+                get_logger().info(f'Applying {args.simd} optimization patches...')
+                patches.apply_patches(
+                    patches.generate_patches_from_series(_ROOT_DIR / 'patches', resolve=True, series=simd_series_file),
+                    source_tree,
+                    patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
+                )
 
         # Substitute domains
         domain_substitution_list = (_ROOT_DIR / 'ungoogled-chromium' / 'domain_substitution.list') if args.tarball else (_ROOT_DIR  / 'domain_substitution.list')
@@ -285,6 +302,14 @@ def main():
         if args.tarball:
             windows_flags += '\nchrome_pgo_phase=0\n'
         gn_flags += windows_flags
+        
+        # Add SIMD optimization flags if not ARM or x86
+        if not args.arm and not args.x86:
+            simd_flags_file = _ROOT_DIR / f'flags.windows.{args.simd}.gn'
+            if simd_flags_file.exists():
+                gn_flags += '\n# SIMD optimization flags\n'
+                gn_flags += simd_flags_file.read_text(encoding=ENCODING)
+        
         (source_tree / 'out/Default/args.gn').write_text(gn_flags, encoding=ENCODING)
 
     # Enter source tree to run build commands

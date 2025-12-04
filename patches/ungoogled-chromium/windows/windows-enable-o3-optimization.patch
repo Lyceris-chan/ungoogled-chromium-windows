@@ -1,0 +1,21 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -2797,7 +2797,7 @@ config("optimize") {
+     # consistency with the other platforms.
+     cflags = [
+                "/O2",
+-               "/clang:-O2",
++               "/clang:-O3",
+              ] + common_optimize_on_cflags
+ 
+     # The `-O3` for clang turns on extra optimizations compared to the standard
+@@ -2881,6 +2881,9 @@ config("optimize_max") {
+     # Favor speed over size, /O2 must be before the common flags.
+     # /O2 implies /Ot, /Oi, and /GF.
+     cflags = [ "/O2" ] + common_optimize_on_cflags
++    if (is_clang) {
++      cflags += [ "/clang:-O3" ]
++    }
+   } else if (optimize_for_fuzzing) {
+     cflags = [ "-O1" ] + common_optimize_on_cflags
+   } else {
