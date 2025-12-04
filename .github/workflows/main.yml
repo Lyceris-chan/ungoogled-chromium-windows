@@ -20,6 +20,11 @@ on:
         required: false
         default: ''
         type: string
+      create_release:
+        description: 'Create a release after build completes'
+        required: true
+        default: false
+        type: boolean
 jobs:
   build-x64:
     if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64' }}
@@ -136,7 +141,7 @@ jobs:
 
   publish-release:
     needs: [build-x64, build-x86, build-arm]
-    if: ${{ always() && github.event_name == 'push' }}
+    if: ${{ always() && (github.event_name == 'push' || inputs.create_release) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -168,7 +173,7 @@ jobs:
 
   publish-winget:
     needs: publish-release
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' || inputs.create_release }}
     runs-on: windows-2022
     steps:
       - name: Checkout
