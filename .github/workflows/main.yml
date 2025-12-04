@@ -53,8 +53,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x64-sse3-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-sse3
+          restore-keys: |
+            ${{ runner.os }}-sccache-x64-sse3
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -94,8 +97,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x64-avx-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-avx
+          restore-keys: |
+            ${{ runner.os }}-sccache-x64-avx
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -135,8 +141,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x64-avx2-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-avx2
+          restore-keys: |
+            ${{ runner.os }}-sccache-x64-avx2
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -176,8 +185,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x64-avx512-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-avx512
+          restore-keys: |
+            ${{ runner.os }}-sccache-x64-avx512
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -216,8 +228,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-x86-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x86
+          restore-keys: |
+            ${{ runner.os }}-sccache-x86
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
@@ -256,8 +271,11 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-arm-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-arm
+          restore-keys: |
+            ${{ runner.os }}-sccache-arm
           save: true
+          create-symlink: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
         with:
