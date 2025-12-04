@@ -1,0 +1,11 @@
+--- a/v8/BUILD.gn
++++ b/v8/BUILD.gn
+@@ -2343,7 +2343,7 @@ template("run_mksnapshot") {
+ 
+         # Replace this with --warn-about-builtin-profile-data to see the full
+         # list of builtins with incompatible profiles.
+-        "--abort-on-bad-builtin-profile-data",
++        "--warn-about-builtin-profile-data",
+       ]
+ 
+       if (!v8_enable_builtins_profiling && v8_enable_builtins_reordering) {

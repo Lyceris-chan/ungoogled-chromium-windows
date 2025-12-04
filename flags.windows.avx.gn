@@ -7,4 +7,3 @@ use_avx=true
 use_avx2=false
 use_avx512=false
 use_fma=false
-rtc_enable_avx2=false
