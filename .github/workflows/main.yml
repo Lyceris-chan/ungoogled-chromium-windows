@@ -279,31 +279,37 @@ jobs:
       - name: Download x64-sse3 package
         if: ${{ needs.build-x64-sse3.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-sse3
       - name: Download x64-avx package
         if: ${{ needs.build-x64-avx.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx
       - name: Download x64-avx2 package
         if: ${{ needs.build-x64-avx2.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx2
       - name: Download x64-avx512 package
         if: ${{ needs.build-x64-avx512.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x64-avx512
       - name: Download x86 package
         if: ${{ needs.build-x86.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-x86
       - name: Download arm package
         if: ${{ needs.build-arm.result == 'success' }}
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: chromium-arm
       - name: Publish release
