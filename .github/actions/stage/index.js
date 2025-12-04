@@ -18,7 +18,7 @@ async function run() {
     }
 
     const artifact = new DefaultArtifactClient();
-    const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact');
+    const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact-x64');
 
     if (from_artifact) {
         const artifactInfo = await artifact.getArtifact(artifactName);
@@ -46,7 +46,7 @@ async function run() {
         const globber = await glob.create('C:\\ungoogled-chromium-windows\\build\\ungoogled-chromium*',
             {matchDirectories: false});
         let packageList = await globber.glob();
-        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : 'chromium');
+        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : 'chromium-x64');
         for (let i = 0; i < 5; ++i) {
             try {
                 await artifact.deleteArtifact(finalArtifactName);

@@ -4,7 +4,7 @@ on:
     tags:
       - '*'
 jobs:
-  build-default:
+  build-x64:
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -15,7 +15,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           variant: sccache
-          key: ${{ runner.os }}-sccache-default-${{ hashFiles('**') }}
+          key: ${{ runner.os }}-sccache-x64-${{ hashFiles('**') }}
           save: true
       - name: Set up Python 3.12
         uses: actions/setup-python@v5
@@ -100,17 +100,17 @@ jobs:
       finished: ${{ steps.stage.outputs.finished }}
 
   publish-release:
-    needs: [build-default, build-x86, build-arm]
+    needs: [build-x64, build-x86, build-arm]
     if: ${{ always() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Download package
-        if: ${{ needs.build-default.result == 'success' }}
+      - name: Download x64 package
+        if: ${{ needs.build-x64.result == 'success' }}
         uses: actions/download-artifact@v4
         with:
-          name: chromium
+          name: chromium-x64
       - name: Download x86 package
         if: ${{ needs.build-x86.result == 'success' }}
         uses: actions/download-artifact@v4
