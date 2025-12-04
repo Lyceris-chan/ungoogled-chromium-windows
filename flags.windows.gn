@@ -36,26 +36,6 @@ v8_enable_turbofan=true
 v8_enable_wasm_simd256_revec=true
 use_v8_context_snapshot=true
 
-# Media optimizations
-media_use_ffmpeg=true
-media_use_libvpx=true
-enable_hls_demuxer=true
-enable_ffmpeg_video_decoders=true
-use_webaudio_pffft=true
-enable_platform_hevc=true
-enable_hevc_parser_and_hw_decoder=true
-platform_has_optional_hevc_decode_support=true
-platform_has_optional_hevc_encode_support=true
-enable_platform_ac3_eac3_audio=true
-enable_platform_dolby_vision=true
-enable_platform_mpeg_h_audio=true
-enable_platform_dts_audio=true
-
-# WebRTC optimizations
-rtc_use_h264=true
-rtc_use_h265=true
-rtc_build_examples=false
-
 # Other optimizations
 optimize_webui=true
 enable_precompiled_headers=false

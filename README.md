@@ -33,7 +33,6 @@ For x64 builds, you can choose from the following SIMD instruction set levels:
 - **LLVM Loop Optimizations**: Advanced loop transformations including loop interchange, unroll-and-jam, and loop flattening
 - **O3 Optimization**: Aggressive compiler optimizations enabled
 - **V8 Engine Optimizations**: Fast Torque, Maglev, TurboFan, and WASM SIMD256 revectorization
-- **Media Optimizations**: HEVC, H.264, H.265 WebRTC support, and enhanced codec support
 
 ## Building
 
