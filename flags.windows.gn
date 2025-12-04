@@ -15,7 +15,6 @@ v8_symbol_level=0
 symbol_level=0
 enable_rust=true
 enable_mse_mpeg2ts_stream_parser=true
-cc_wrapper="sccache"
 
 # Thorium/Chromium_Clang optimizations
 use_thin_lto=true
