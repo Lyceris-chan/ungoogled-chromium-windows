@@ -23,7 +23,7 @@ import downloads
 import domain_substitution
 import prune_binaries
 import patches
-from _common import ENCODING, USE_REGISTRY, ExtractorEnum, get_logger
+from _common import ENCODING, USE_REGISTRY, ExtractorEnum, get_logger, parse_series
 sys.path.pop(0)
 
 _ROOT_DIR = Path(__file__).resolve().parent
@@ -238,8 +238,12 @@ def main():
             simd_series_file = _ROOT_DIR / 'patches' / f'series.{args.simd}'
             if simd_series_file.exists():
                 get_logger().info(f'Applying {args.simd} optimization patches...')
+                # Read the SIMD series file and generate patch paths
+                def generate_simd_patches():
+                    for patch_path in parse_series(simd_series_file):
+                        yield (_ROOT_DIR / 'patches' / patch_path).resolve()
                 patches.apply_patches(
-                    patches.generate_patches_from_series(_ROOT_DIR / 'patches', resolve=True, series=simd_series_file),
+                    generate_simd_patches(),
                     source_tree,
                     patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
                 )
