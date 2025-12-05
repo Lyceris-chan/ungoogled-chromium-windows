@@ -15,6 +15,10 @@ inputs:
     description: Build arm binary
     required: false
     default: 'false'
+  simd:
+    description: SIMD variant to build (sse3, avx, avx2, avx512)
+    required: false
+    default: 'sse3'
   artifact_id:
     description: Specific artifact ID to resume from (overrides auto-detection)
     required: false

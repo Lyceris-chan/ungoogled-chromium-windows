@@ -1,5 +1,5 @@
 name: CI
-on:
+on:  
   push:
     tags:
       - '*'
@@ -8,172 +8,607 @@ on:
       arch:
         description: 'Architecture to build'
         required: true
-        default: 'all'
+        default: 'x64'
         type: choice
         options:
           - all
           - x64
           - x86
           - arm
-      artifact_id:
-        description: 'Artifact ID to resume from (leave empty for fresh build)'
-        required: false
-        default: ''
-        type: string
+      simd:
+        description: 'SIMD variant to build (x64 only)'
+        required: true
+        default: 'sse3'
+        type: choice
+        options:
+          - all
+          - sse3
+          - avx
+          - avx2
+          - avx512
       create_release:
         description: 'Create a release after build completes'
         required: true
         default: false
         type: boolean
+
 jobs:
-  build-x64:
-    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64' }}
-    runs-on: windows-2022
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - name: Setup sccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          variant: sccache
-          key: ${{ runner.os }}-sccache-x64-${{ hashFiles('**') }}
-          save: true
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: false
-          from_artifact: true
-          artifact_id: ${{ github.event.inputs.artifact_id }}
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+  # x64 build stages (16 stages like original)
+  build-1:
+    if: github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x64'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 1
+      finished: 'false'
+    secrets: inherit
 
-  build-x86:
-    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x86' }}
-    runs-on: windows-2022
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - name: Setup sccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          variant: sccache
-          key: ${{ runner.os }}-sccache-x86-${{ hashFiles('**') }}
-          save: true
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: false
-          from_artifact: true
-          x86: true
-          artifact_id: ${{ github.event.inputs.artifact_id }}
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+  build-2:
+    needs: build-1
+    if: needs.build-1.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 2
+      finished: ${{ needs.build-1.outputs.finished }}
+    secrets: inherit
 
-  build-arm:
-    if: ${{ github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'arm' }}
-    runs-on: windows-2022
-    permissions:
-      contents: read
-      actions: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
-      - name: Setup sccache
-        uses: hendrikmuhs/ccache-action@v1.2
-        with:
-          variant: sccache
-          key: ${{ runner.os }}-sccache-arm-${{ hashFiles('**') }}
-          save: true
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Init
-        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
-      - name: Setup Stage
-        run: npm install
-        working-directory: ./.github/actions/stage
-      - name: Run Stage
-        id: stage
-        uses: ./.github/actions/stage
-        with:
-          finished: false
-          from_artifact: true
-          arm: true
-          artifact_id: ${{ github.event.inputs.artifact_id }}
-    outputs:
-      finished: ${{ steps.stage.outputs.finished }}
-      artifact_id: ${{ steps.stage.outputs.artifact_id }}
+  build-3:
+    needs: build-2
+    if: needs.build-2.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 3
+      finished: ${{ needs.build-2.outputs.finished }}
+    secrets: inherit
+
+  build-4:
+    needs: build-3
+    if: needs.build-3.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 4
+      finished: ${{ needs.build-3.outputs.finished }}
+    secrets: inherit
+
+  build-5:
+    needs: build-4
+    if: needs.build-4.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 5
+      finished: ${{ needs.build-4.outputs.finished }}
+    secrets: inherit
+
+  build-6:
+    needs: build-5
+    if: needs.build-5.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 6
+      finished: ${{ needs.build-5.outputs.finished }}
+    secrets: inherit
+
+  build-7:
+    needs: build-6
+    if: needs.build-6.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 7
+      finished: ${{ needs.build-6.outputs.finished }}
+    secrets: inherit
+
+  build-8:
+    needs: build-7
+    if: needs.build-7.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 8
+      finished: ${{ needs.build-7.outputs.finished }}
+    secrets: inherit
+
+  build-9:
+    needs: build-8
+    if: needs.build-8.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 9
+      finished: ${{ needs.build-8.outputs.finished }}
+    secrets: inherit
+
+  build-10:
+    needs: build-9
+    if: needs.build-9.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 10
+      finished: ${{ needs.build-9.outputs.finished }}
+    secrets: inherit
+
+  build-11:
+    needs: build-10
+    if: needs.build-10.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 11
+      finished: ${{ needs.build-10.outputs.finished }}
+    secrets: inherit
+
+  build-12:
+    needs: build-11
+    if: needs.build-11.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 12
+      finished: ${{ needs.build-11.outputs.finished }}
+    secrets: inherit
+
+  build-13:
+    needs: build-12
+    if: needs.build-12.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 13
+      finished: ${{ needs.build-12.outputs.finished }}
+    secrets: inherit
+
+  build-14:
+    needs: build-13
+    if: needs.build-13.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 14
+      finished: ${{ needs.build-13.outputs.finished }}
+    secrets: inherit
+
+  build-15:
+    needs: build-14
+    if: needs.build-14.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 15
+      finished: ${{ needs.build-14.outputs.finished }}
+    secrets: inherit
+
+  build-16:
+    needs: build-15
+    if: needs.build-15.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x64
+      simd: ${{ github.event.inputs.simd || 'sse3' }}
+      stage: 16
+      finished: ${{ needs.build-15.outputs.finished }}
+    secrets: inherit
+
+  # x86 build stages (16 stages)
+  build-x86-1:
+    if: github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'x86'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 1
+      finished: 'false'
+    secrets: inherit
+
+  build-x86-2:
+    needs: build-x86-1
+    if: needs.build-x86-1.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 2
+      finished: ${{ needs.build-x86-1.outputs.finished }}
+    secrets: inherit
+
+  build-x86-3:
+    needs: build-x86-2
+    if: needs.build-x86-2.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 3
+      finished: ${{ needs.build-x86-2.outputs.finished }}
+    secrets: inherit
+
+  build-x86-4:
+    needs: build-x86-3
+    if: needs.build-x86-3.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 4
+      finished: ${{ needs.build-x86-3.outputs.finished }}
+    secrets: inherit
+
+  build-x86-5:
+    needs: build-x86-4
+    if: needs.build-x86-4.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 5
+      finished: ${{ needs.build-x86-4.outputs.finished }}
+    secrets: inherit
+
+  build-x86-6:
+    needs: build-x86-5
+    if: needs.build-x86-5.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 6
+      finished: ${{ needs.build-x86-5.outputs.finished }}
+    secrets: inherit
+
+  build-x86-7:
+    needs: build-x86-6
+    if: needs.build-x86-6.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 7
+      finished: ${{ needs.build-x86-6.outputs.finished }}
+    secrets: inherit
+
+  build-x86-8:
+    needs: build-x86-7
+    if: needs.build-x86-7.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 8
+      finished: ${{ needs.build-x86-7.outputs.finished }}
+    secrets: inherit
+
+  build-x86-9:
+    needs: build-x86-8
+    if: needs.build-x86-8.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 9
+      finished: ${{ needs.build-x86-8.outputs.finished }}
+    secrets: inherit
+
+  build-x86-10:
+    needs: build-x86-9
+    if: needs.build-x86-9.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 10
+      finished: ${{ needs.build-x86-9.outputs.finished }}
+    secrets: inherit
+
+  build-x86-11:
+    needs: build-x86-10
+    if: needs.build-x86-10.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 11
+      finished: ${{ needs.build-x86-10.outputs.finished }}
+    secrets: inherit
+
+  build-x86-12:
+    needs: build-x86-11
+    if: needs.build-x86-11.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 12
+      finished: ${{ needs.build-x86-11.outputs.finished }}
+    secrets: inherit
+
+  build-x86-13:
+    needs: build-x86-12
+    if: needs.build-x86-12.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 13
+      finished: ${{ needs.build-x86-12.outputs.finished }}
+    secrets: inherit
+
+  build-x86-14:
+    needs: build-x86-13
+    if: needs.build-x86-13.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 14
+      finished: ${{ needs.build-x86-13.outputs.finished }}
+    secrets: inherit
+
+  build-x86-15:
+    needs: build-x86-14
+    if: needs.build-x86-14.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 15
+      finished: ${{ needs.build-x86-14.outputs.finished }}
+    secrets: inherit
+
+  build-x86-16:
+    needs: build-x86-15
+    if: needs.build-x86-15.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: x86
+      simd: 'sse3'
+      stage: 16
+      finished: ${{ needs.build-x86-15.outputs.finished }}
+    secrets: inherit
+
+  # arm build stages (16 stages)
+  build-arm-1:
+    if: github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'arm'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 1
+      finished: 'false'
+    secrets: inherit
+
+  build-arm-2:
+    needs: build-arm-1
+    if: needs.build-arm-1.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 2
+      finished: ${{ needs.build-arm-1.outputs.finished }}
+    secrets: inherit
+
+  build-arm-3:
+    needs: build-arm-2
+    if: needs.build-arm-2.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 3
+      finished: ${{ needs.build-arm-2.outputs.finished }}
+    secrets: inherit
+
+  build-arm-4:
+    needs: build-arm-3
+    if: needs.build-arm-3.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 4
+      finished: ${{ needs.build-arm-3.outputs.finished }}
+    secrets: inherit
+
+  build-arm-5:
+    needs: build-arm-4
+    if: needs.build-arm-4.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 5
+      finished: ${{ needs.build-arm-4.outputs.finished }}
+    secrets: inherit
+
+  build-arm-6:
+    needs: build-arm-5
+    if: needs.build-arm-5.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 6
+      finished: ${{ needs.build-arm-5.outputs.finished }}
+    secrets: inherit
+
+  build-arm-7:
+    needs: build-arm-6
+    if: needs.build-arm-6.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 7
+      finished: ${{ needs.build-arm-6.outputs.finished }}
+    secrets: inherit
+
+  build-arm-8:
+    needs: build-arm-7
+    if: needs.build-arm-7.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 8
+      finished: ${{ needs.build-arm-7.outputs.finished }}
+    secrets: inherit
+
+  build-arm-9:
+    needs: build-arm-8
+    if: needs.build-arm-8.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 9
+      finished: ${{ needs.build-arm-8.outputs.finished }}
+    secrets: inherit
+
+  build-arm-10:
+    needs: build-arm-9
+    if: needs.build-arm-9.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 10
+      finished: ${{ needs.build-arm-9.outputs.finished }}
+    secrets: inherit
+
+  build-arm-11:
+    needs: build-arm-10
+    if: needs.build-arm-10.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 11
+      finished: ${{ needs.build-arm-10.outputs.finished }}
+    secrets: inherit
+
+  build-arm-12:
+    needs: build-arm-11
+    if: needs.build-arm-11.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 12
+      finished: ${{ needs.build-arm-11.outputs.finished }}
+    secrets: inherit
+
+  build-arm-13:
+    needs: build-arm-12
+    if: needs.build-arm-12.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 13
+      finished: ${{ needs.build-arm-12.outputs.finished }}
+    secrets: inherit
+
+  build-arm-14:
+    needs: build-arm-13
+    if: needs.build-arm-13.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 14
+      finished: ${{ needs.build-arm-13.outputs.finished }}
+    secrets: inherit
+
+  build-arm-15:
+    needs: build-arm-14
+    if: needs.build-arm-14.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 15
+      finished: ${{ needs.build-arm-14.outputs.finished }}
+    secrets: inherit
+
+  build-arm-16:
+    needs: build-arm-15
+    if: needs.build-arm-15.outputs.finished != 'true'
+    uses: ./.github/workflows/build-stage.yml
+    with:
+      arch: arm
+      simd: 'sse3'
+      stage: 16
+      finished: ${{ needs.build-arm-15.outputs.finished }}
+    secrets: inherit
 
   publish-release:
-    needs: [build-x64, build-x86, build-arm]
-    if: ${{ always() && (github.event_name == 'push' || inputs.create_release) }}
+    needs: [build-16, build-x86-16, build-arm-16]
+    if: always() && (github.event_name == 'push' || inputs.create_release)
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - name: Download x64 package
-        if: ${{ needs.build-x64.result == 'success' }}
         uses: actions/download-artifact@v4
         with:
           name: chromium-x64
+        continue-on-error: true
       - name: Download x86 package
-        if: ${{ needs.build-x86.result == 'success' }}
         uses: actions/download-artifact@v4
         with:
           name: chromium-x86
+        continue-on-error: true
       - name: Download arm package
-        if: ${{ needs.build-arm.result == 'success' }}
         uses: actions/download-artifact@v4
         with:
           name: chromium-arm
-      - name: Publish release
-        id: publish
-        uses: softprops/action-gh-release@v1
-        with:
-          fail_on_unmatched_files: false
-          files: |
-            ungoogled-chromium*
-    outputs:
-      assets: ${{ steps.publish.outputs.assets }}
+        continue-on-error: true
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          # Check if release exists
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, uploading assets..."
+            for file in ungoogled-chromium*; do
+              if [ -f "$file" ]; then
+                echo "Uploading $file..."
+                gh release upload "$TAG" "$file" --clobber || true
+              fi
+            done
+          else
+            echo "Creating new release $TAG..."
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes \
+              ungoogled-chromium* || true
+          fi
 
   publish-winget:
     needs: publish-release
-    if: ${{ github.event_name == 'push' || inputs.create_release }}
+    if: github.event_name == 'push' || inputs.create_release
     runs-on: windows-2022
     steps:
       - name: Checkout
@@ -186,10 +621,20 @@ jobs:
       - name: Setup Stage
         run: npm install
         working-directory: ./.github/actions/winget
+      - name: Get release assets
+        id: get-assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          TAG="${{ github.ref_name }}"
+          ASSETS=$(gh release view "$TAG" --json assets -q '.assets[].url' | tr '\n' ' ')
+          echo "assets=$ASSETS" >> $GITHUB_OUTPUT
       - name: Run Stage
         id: stage
         uses: ./.github/actions/winget
         with:
           token: ${{ secrets.PAT }}
           version: ${{ github.ref_name }}
-          assets: ${{ needs.publish-release.outputs.assets }}
+          assets: ${{ steps.get-assets.outputs.assets }}

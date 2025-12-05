@@ -1,0 +1,32 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -1153,6 +1153,9 @@ config("compiler") {
+ 
+       # We use clang-rt sanitizer runtimes.
+       "-Zexternal-clangrt",
++
++     "-Ctarget-cpu=x86-64-v3",
++     "-Cllvm-args=-fp-contract=fast",
+     ]
+   }
+ 
+@@ -1310,7 +1313,7 @@ config("compiler_cpu_abi") {
+         cflags += [ "-m64" ]
+         ldflags += [ "-m64" ]
+       }
+-      cflags += [ "-msse3" ]
++      cflags += [ "-march=x86-64-v3" ]
+     } else if (current_cpu == "x86") {
+       if (is_clang && !is_android && !is_chromeos_device) {
+         cflags += [ "--target=i386-unknown-linux-gnu" ]
+--- a/build/config/win/BUILD.gn
++++ b/build/config/win/BUILD.gn
+@@ -120,7 +120,7 @@ config("compiler") {
+     # microarchitecture. MSVC only supports a subset of architectures, and the
+     # next step after SSE2 will be AVX.
+     if (current_cpu == "x86" || current_cpu == "x64") {
+-      cflags += [ "-msse3" ]
++      cflags += [ "-mtune=haswell", "-msse3", "-mssse3","-msse4.1", "-msse4.2", "-mavx", "-mavx2", "-mfma", "-mf16c", "-mlzcnt", "-mbmi2", "/clang:-w", ]
+     }
+ 
+     # Enable ANSI escape codes if something emulating them is around (cmd.exe
