@@ -568,10 +568,25 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download x64 package
+      - name: Download x64 package (sse3)
         uses: actions/download-artifact@v4
         with:
-          name: chromium-x64
+          name: chromium-x64-sse3
+        continue-on-error: true
+      - name: Download x64 package (avx)
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx
+        continue-on-error: true
+      - name: Download x64 package (avx2)
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx2
+        continue-on-error: true
+      - name: Download x64 package (avx512)
+        uses: actions/download-artifact@v4
+        with:
+          name: chromium-x64-avx512
         continue-on-error: true
       - name: Download x86 package
         uses: actions/download-artifact@v4
