@@ -386,6 +386,7 @@ jobs:
     secrets: inherit
 
   # arm build stages (16 stages)
+  # Note: simd parameter is ignored for ARM builds as it only applies to x64
   build-arm-1:
     if: github.event_name == 'push' || github.event.inputs.arch == 'all' || github.event.inputs.arch == 'arm'
     uses: ./.github/workflows/build-stage.yml

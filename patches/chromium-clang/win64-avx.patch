@@ -7,7 +7,7 @@
 +
 +     "-Ctarget-cpu=x86-64-v2",
 +     "-Ctarget-feature=+avx",
-+     "-Cllvm-args=-fp-contract=off",
++     "-Cllvm-args=-fp-contract=fast",
      ]
    }
  
