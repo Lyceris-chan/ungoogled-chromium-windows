@@ -35,7 +35,7 @@
        ]
      } else {
        ldflags += [ "-flto=thin" ]
-+      ldflags +=[ "-Wl,-mllvm,-indexed-codegen-data-read-function-map-names=false" ]
++      ldflags += [ "-Wl,-mllvm,-indexed-codegen-data-read-function-map-names=false" ]
  
        # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
        # usage in crbug.com/1038040. Note this will increase build time in
