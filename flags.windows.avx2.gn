@@ -1,9 +1,4 @@
 # AVX2 optimization flags
 # Requires CPUs with AVX2 instruction set support (Haswell/Excavator or newer)
-use_sse3=true
-use_sse41=true
-use_sse42=true
-use_avx=true
-use_avx2=true
-use_avx512=false
-use_fma=true
+# Note: Actual AVX2 compiler flags are set via patches (windows-enable-avx2.patch)
+# which modify build/config/win/BUILD.gn and build/config/compiler/BUILD.gn
