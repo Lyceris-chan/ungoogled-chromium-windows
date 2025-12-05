@@ -53,9 +53,10 @@ async function run() {
     const from_artifact = core.getBooleanInput('from_artifact', {required: true});
     const x86 = core.getBooleanInput('x86', {required: false});
     const arm = core.getBooleanInput('arm', {required: false});
+    const simd = core.getInput('simd', {required: false}) || 'sse3';
     const inputArtifactId = core.getInput('artifact_id', {required: false});
     
-    console.log(`finished: ${finished}, artifact: ${from_artifact}, inputArtifactId: ${inputArtifactId}`);
+    console.log(`finished: ${finished}, artifact: ${from_artifact}, simd: ${simd}, inputArtifactId: ${inputArtifactId}`);
     
     if (finished) {
         core.setOutput('finished', true);
@@ -63,7 +64,7 @@ async function run() {
     }
 
     const artifact = new DefaultArtifactClient();
-    const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact-x64');
+    const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : `build-artifact-x64-${simd}`);
 
     if (from_artifact) {
         try {
@@ -106,6 +107,9 @@ async function run() {
         args.push('--x86');
     if (arm)
         args.push('--arm');
+    if (simd && simd !== 'sse3') {
+        args.push('--simd', simd);
+    }
     
     await exec.exec('python', ['-m', 'pip', 'install', 'httplib2==0.22.0'], {
         cwd: 'C:\\ungoogled-chromium-windows',
@@ -133,7 +137,7 @@ async function run() {
         const globber = await glob.create('C:\\ungoogled-chromium-windows\\build\\ungoogled-chromium*',
             {matchDirectories: false});
         let packageList = await globber.glob();
-        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : 'chromium-x64');
+        const finalArtifactName = x86 ? 'chromium-x86' : (arm ? 'chromium-arm' : `chromium-x64-${simd}`);
         for (let i = 0; i < 5; ++i) {
             try {
                 await artifact.deleteArtifact(finalArtifactName);
@@ -168,8 +172,9 @@ run().catch(async err => {
     try {
         const x86 = core.getBooleanInput('x86', {required: false});
         const arm = core.getBooleanInput('arm', {required: false});
+        const simd = core.getInput('simd', {required: false}) || 'sse3';
         const artifact = new DefaultArtifactClient();
-        const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : 'build-artifact-x64');
+        const artifactName = x86 ? 'build-artifact-x86' : (arm ? 'build-artifact-arm' : `build-artifact-x64-${simd}`);
         
         const artifactId = await uploadBuildArtifact(artifact, artifactName);
         setArtifactOutput(artifactId);

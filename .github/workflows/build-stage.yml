@@ -1,0 +1,63 @@
+name: Build Stage
+on:
+  workflow_call:
+    inputs:
+      arch:
+        description: 'Architecture to build (x64, x86, arm)'
+        required: true
+        type: string
+      simd:
+        description: 'SIMD variant (sse3, avx, avx2, avx512)'
+        required: false
+        type: string
+        default: 'sse3'
+      stage:
+        description: 'Stage number'
+        required: true
+        type: number
+      finished:
+        description: 'Whether build is already finished'
+        required: true
+        type: string
+    outputs:
+      finished:
+        description: 'Whether build is finished'
+        value: ${{ jobs.build.outputs.finished }}
+
+jobs:
+  build:
+    runs-on: windows-2022
+    permissions:
+      contents: read
+      actions: write
+    outputs:
+      finished: ${{ steps.stage.outputs.finished }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+      - name: Setup sccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          variant: sccache
+          key: ${{ runner.os }}-sccache-${{ inputs.arch }}-${{ inputs.simd }}-${{ hashFiles('**') }}
+          save: true
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Init
+        run: Copy-Item -Path . -Destination "C:\ungoogled-chromium-windows" -Recurse
+      - name: Setup Stage
+        run: npm install
+        working-directory: ./.github/actions/stage
+      - name: Run Stage
+        id: stage
+        uses: ./.github/actions/stage
+        with:
+          finished: ${{ inputs.finished }}
+          from_artifact: ${{ inputs.stage > 1 }}
+          x86: ${{ inputs.arch == 'x86' }}
+          arm: ${{ inputs.arch == 'arm' }}
+          simd: ${{ inputs.simd }}

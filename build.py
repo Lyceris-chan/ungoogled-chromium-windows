@@ -141,6 +141,12 @@ def main():
         action='store_true'
     )
     parser.add_argument(
+        '--simd',
+        choices=['sse3', 'avx', 'avx2', 'avx512'],
+        default='sse3',
+        help='SIMD variant to build (x64 only). Default: %(default)s'
+    )
+    parser.add_argument(
         '--tarball',
         action='store_true'
     )
@@ -226,6 +232,29 @@ def main():
             source_tree,
             patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
         )
+        # Apply Chromium_Clang optimization patches (x64 only, not for x86 or arm)
+        if not args.x86 and not args.arm:
+            chromium_clang_patches_dir = _ROOT_DIR / 'patches' / 'chromium-clang'
+            if chromium_clang_patches_dir.exists():
+                # Always apply base optimizations
+                base_patch = chromium_clang_patches_dir / 'chromium-clang-base-optimizations.patch'
+                if base_patch.exists():
+                    get_logger().info('Applying Chromium_Clang base optimizations...')
+                    patches.apply_patches(
+                        [base_patch],
+                        source_tree,
+                        patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
+                    )
+                # Apply SIMD-specific patch if not using default sse3
+                if args.simd != 'sse3':
+                    simd_patch = chromium_clang_patches_dir / f'win64-{args.simd}.patch'
+                    if simd_patch.exists():
+                        get_logger().info(f'Applying Chromium_Clang {args.simd.upper()} SIMD patch...')
+                        patches.apply_patches(
+                            [simd_patch],
+                            source_tree,
+                            patch_bin_path=(source_tree / _PATCH_BIN_RELPATH)
+                        )
 
         # Substitute domains
         domain_substitution_list = (_ROOT_DIR / 'ungoogled-chromium' / 'domain_substitution.list') if args.tarball else (_ROOT_DIR  / 'domain_substitution.list')
