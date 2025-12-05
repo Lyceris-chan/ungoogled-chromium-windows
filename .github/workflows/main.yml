@@ -31,6 +31,11 @@ on:
         required: true
         default: false
         type: boolean
+      publish_winget:
+        description: 'Publish to winget repository (requires PAT secret)'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   # x64 build stages (16 stages like original)
@@ -624,7 +629,7 @@ jobs:
 
   publish-winget:
     needs: publish-release
-    if: github.event_name == 'push' || inputs.create_release
+    if: inputs.publish_winget == true
     runs-on: windows-2022
     steps:
       - name: Checkout
