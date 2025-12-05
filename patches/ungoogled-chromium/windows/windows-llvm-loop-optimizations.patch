@@ -35,3 +35,34 @@
    # /OPT:ICF is not desirable in Debug builds, since code-folding can result in
    # misleading symbols in stack traces.
    if (!is_debug && !is_component_build) {
+@@ -2693,6 +2704,31 @@ if (is_win) {
+   common_optimize_on_cflags = []
+   common_optimize_on_ldflags = []
+ 
++  common_optimize_on_cflags += [
++   "-mllvm", "-adce-remove-loops",
++   "-mllvm", "-enable-gvn-hoist",
++   "-mllvm", "-enable-local-reassign",
++   "-mllvm", "-enable-nontrivial-unswitch",
++   "-mllvm", "-enable-loopinterchange",
++   "-mllvm", "-enable-loop-distribute",
++   "-mllvm", "-enable-unroll-and-jam",
++   "-mllvm", "-enable-loop-flatten",
++   "-mllvm", "-enable-loop-versioning-licm",
++  ]
++
++  common_optimize_on_ldflags += [
++   "-Wl,-mllvm,-adce-remove-loops",
++   "-Wl,-mllvm,-enable-gvn-hoist",
++   "-Wl,-mllvm,-enable-local-reassign",
++   "-Wl,-mllvm,-enable-nontrivial-unswitch",
++   "-Wl,-mllvm,-enable-loopinterchange",
++   "-Wl,-mllvm,-enable-loop-distribute",
++   "-Wl,-mllvm,-enable-unroll-and-jam",
++   "-Wl,-mllvm,-enable-loop-flatten",
++   "-Wl,-mllvm,-enable-loop-versioning-licm",
++  ]
++
+   if (is_android) {
+     # TODO(jdduke) Re-enable on mips after resolving linking
+     # issues with libc++ (crbug.com/456380).

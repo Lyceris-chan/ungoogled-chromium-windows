@@ -7,7 +7,7 @@
 -      cflags += [ "-msse3" ]
 +      cflags += [ "/arch:AVX512", "-mtune=skylake-avx512", "/clang:-w", ]
      }
- 
+
      # Enable ANSI escape codes if something emulating them is around (cmd.exe
 @@ -190,7 +190,7 @@ config("compiler") {
      if (use_lld) {
@@ -16,12 +16,21 @@
 -      ldflags += [ "/OPT:NOLLDTAILMERGE" ]
 +      ldflags += [ "/OPT:LLDTAILMERGE" ]
      }
- 
+
      # TODO(siggi): Is this of any use anymore?
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
+@@ -1310,7 +1310,7 @@ config("compiler_cpu_abi") {
+       cflags += [ "-m64" ]
+       ldflags += [ "-m64" ]
+     }
+-    cflags += [ "-msse3" ]
++    cflags += [ "-march=x86-64-v3", "-mtune=skylake-avx512", ]
+   } else if (current_cpu == "x86") {
+     if (is_clang && !is_android && !is_chromeos_device) {
+       cflags += [ "--target=i386-unknown-linux-gnu" ]
 @@ -1153,6 +1153,10 @@ config("compiler") {
- 
+
        # We use clang-rt sanitizer runtimes.
        "-Zexternal-clangrt",
 +

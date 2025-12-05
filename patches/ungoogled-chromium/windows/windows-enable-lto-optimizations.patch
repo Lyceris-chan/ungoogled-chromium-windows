@@ -1,6 +1,45 @@
 --- a/build/config/compiler/BUILD.gn
 +++ b/build/config/compiler/BUILD.gn
-@@ -1230,7 +1230,7 @@ config("disallow_unstable_features") {
+@@ -696,14 +696,14 @@ config("compiler") {
+     # other problems.
+     if (default_toolchain != "//build/toolchain/cros:target") {
+       cflags += [
+-        "-mllvm",
+-        "-split-threshold-for-reg-with-hint=0",
++        # "-mllvm",
++        # "-split-threshold-for-reg-with-hint=0",
+       ]
+       if (use_thin_lto && is_a_target_toolchain) {
+         if (is_win) {
+-          ldflags += [ "-mllvm:-split-threshold-for-reg-with-hint=0" ]
++          # ldflags += [ "-mllvm:-split-threshold-for-reg-with-hint=0" ]
+         } else {
+-          ldflags += [ "-Wl,-mllvm,-split-threshold-for-reg-with-hint=0" ]
++          # ldflags += [ "-Wl,-mllvm,-split-threshold-for-reg-with-hint=0" ]
+         }
+       }
+     }
+@@ -839,6 +839,7 @@ config("compiler") {
+     cflags += [
+       "-flto=thin",
+       "-fsplit-lto-unit",
++      "-mllvm", "-indexed-codegen-data-read-function-map-names=false",
+     ]
+ 
+     if (thin_lto_enable_cache) {
+@@ -883,9 +884,11 @@ config("compiler") {
+         "/opt:lldltojobs=all",
+         "-mllvm:-import-instr-limit=$import_instr_limit",
+         "-mllvm:-disable-auto-upgrade-debug-info",
++        "-mllvm:-indexed-codegen-data-read-function-map-names=false",
+       ]
+     } else {
+       ldflags += [ "-flto=thin" ]
++      ldflags +=[ "-Wl,-mllvm,-indexed-codegen-data-read-function-map-names=false" ]
+ 
+       # Enabling ThinLTO on Chrome OS too, in an effort to reduce the memory
+       # usage in crbug.com/1038040. Note this will increase build time in
+@@ -1230,7 +1233,7 @@ config("disallow_unstable_features") {
  # building with ThinLTO, no optimization is performed in the link step.
  config("thinlto_optimize_default") {
    if (!is_debug && use_thin_lto && is_a_target_toolchain) {
@@ -9,7 +48,7 @@
  
      if (is_win) {
        ldflags = [ "/opt:lldlto=" + lto_opt_level ]
-@@ -1261,9 +1261,9 @@ config("thinlto_optimize_default") {
+@@ -1261,9 +1264,9 @@ config("thinlto_optimize_default") {
  config("thinlto_optimize_max") {
    if (!is_debug && use_thin_lto && is_a_target_toolchain) {
      if (thin_lto_enable_optimizations) {

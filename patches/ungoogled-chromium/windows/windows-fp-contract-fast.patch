@@ -1,0 +1,14 @@
+--- a/build/config/compiler/BUILD.gn
++++ b/build/config/compiler/BUILD.gn
+@@ -712,9 +712,9 @@ config("compiler") {
+ 
+     # TODO(crbug.com/40192287): Investigate why/if this should be needed.
+     if (is_win) {
+-      cflags += [ "/clang:-ffp-contract=off" ]
++      cflags += [ "/clang:-ffp-contract=fast" ]
+     } else {
+-      cflags += [ "-ffp-contract=off" ]
++      cflags += [ "-ffp-contract=fast" ]
+     }
+ 
+     # Enable ELF CREL (see crbug.com/357878242) for all platforms that use ELF.
